@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(tidyverse)
+library(nycflights13)
+library(knitr)
+library(ggplot2)
+```
+
+```{r}
+head(flights)
+```
+
+```{r}
+names(flights)
+```
+
+```{r}
+head(airports)
+```
+
+```{r}
+library(psych)
+```
+
