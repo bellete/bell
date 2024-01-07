@@ -1,0 +1,66 @@
+---
+title: "cross validation and prediction, part a"
+author: "Bellete Lu"
+date: "4/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message = FALSE}
+library(tidyverse)
+library(rsample)
+library(e1071)
+```
+
+#A)
+```{r}
+splitter <- function(d, prop) {
+  
+  id <- sample.int(nrow(d), size = floor(prop*nrow(d)))
+  train <- d[id, ]
+  test <- d[-id, ]
+  
+  return(list(test = test, train = train))
+}
+
+tibble(y = 1:5, x=c(letters[1:5])) %>% splitter(., .6)
+```
+
+
+#B)
+```{r}
+get_accuracy <- function(df_train, df_test, kernel, cost, gamma){
+  m <- svm(fire ~., data = df_train, cost = cost, kernel = kernel, gamma = gamma)
+  df_test <- mutate(df_test,
+                    yhat = predict(m, newdata = df_test),
+                    err = yhat != fire)
+  return(list(df_test = df_test, accuracy = mean(!df_test$err))) 
+}
+```
+
+```{r}
+park <- read_csv('http://www.dsi.uminho.pt/~pcortez/forestfires/forestfires.csv') %>%
+  mutate(fire = ifelse(area > 0, 1, 0)) %>%
+  mutate_at(.vars = vars(X, Y, month, day, fire), as.factor) %>%
+  select(-area)
+```
+
+```{r}
+park_sp = splitter(park, .8)
+```
+
+```{r}
+out <- as.list(seq(.5, 5, .25))
+
+out <- map_dbl(out, .f = ~get_accuracy(park_sp$train, park_sp$test, kernel = "radial", cost = .x, gamma = 1)$accuracy) %>% 
+  enframe %>% 
+  mutate(name = seq(.5, 5, .25)) %>% 
+  rename(cost = name, accuracy = value)
+
+ggplot(out, aes(x=cost, y = accuracy)) + geom_point(color = "lemonchiffon4") +
+  geom_line(color = "lemonchiffon2") + theme_bw()
+```
+
